@@ -281,6 +281,170 @@ for uploaded_file in uploaded_files:
         better_question = question_rewriter.invoke({"question": question})
         return {"documents": documents, "question": better_question}
 
+
+    
+    def web_search(state):
+        """
+    Web search based on the re-phrased question.
+
+    Args:
+        state (dict): The current graph state
+
+    Returns:
+        state (dict): Updates documents key with appended web results
+    """
+
+        print("---WEB SEARCH---")
+        question = state["question"]
+
+    # Web search
+        docs = web_search_tool.invoke({"query": question})
+        web_results = "\n".join([d["content"] for d in docs])
+        web_results = Document(page_content=web_results)
+
+        return {"documents": web_results, "question": question}
+
+### Edges ###
+
+    def route_question(state):
+        """
+    Route question to web search or RAG.
+
+    Args:
+        state (dict): The current graph state
+
+    Returns:
+        str: Next node to call
+    """
+
+        print("---ROUTE QUESTION---")
+        question = state["question"]
+        print(question)
+        source = question_router.invoke({"question": question})  
+        print(source)
+        print(source['datasource'])
+        if source['datasource'] == 'web_search':
+            print("---ROUTE QUESTION TO WEB SEARCH---")
+            return "web_search"
+        elif source['datasource'] == 'vectorstore':
+            print("---ROUTE QUESTION TO RAG---")
+            return "vectorstore"
+
+    def decide_to_generate(state):
+        """
+    Determines whether to generate an answer, or re-generate a question.
+
+    Args:
+        state (dict): The current graph state
+
+    Returns:
+        str: Binary decision for next node to call
+    """
+
+        print("---ASSESS GRADED DOCUMENTS---")
+        question = state["question"]
+        filtered_documents = state["documents"]
+
+        if not filtered_documents:
+            # All documents have been filtered check_relevance
+            # We will re-generate a new query
+            print("---DECISION: ALL DOCUMENTS ARE NOT RELEVANT TO QUESTION, TRANSFORM QUERY---")
+            return "transform_query"
+        else:
+            # We have relevant documents, so generate answer
+            print("---DECISION: GENERATE---")
+            return "generate"
+
+    def grade_generation_v_documents_and_question(state):
+        """
+    Determines whether the generation is grounded in the document and answers question.
+
+    Args:
+        state (dict): The current graph state
+
+    Returns:
+        str: Decision for next node to call
+    """
+
+        print("---CHECK HALLUCINATIONS---")
+        question = state["question"]
+        documents = state["documents"]
+        generation = state["generation"]
+
+        score = hallucination_grader.invoke({"documents": documents, "generation": generation})
+        grade = score['score']
+
+        # Check hallucination
+        if grade == "yes":
+            print("---DECISION: GENERATION IS GROUNDED IN DOCUMENTS---")
+            # Check question-answering
+            print("---GRADE GENERATION vs QUESTION---")
+            score = answer_grader.invoke({"question": question,"generation": generation})
+            grade = score['score']
+            if grade == "yes":
+                print("---DECISION: GENERATION ADDRESSES QUESTION---")
+                return "useful"
+            else:
+                print("---DECISION: GENERATION DOES NOT ADDRESS QUESTION---")
+                return "not useful"
+        else:
+            print("---DECISION: GENERATION IS NOT GROUNDED IN DOCUMENTS, RE-TRY---")
+            return "not supported"
+        
+
+    workflow = StateGraph(GraphState)
+
+    # Define the nodes
+    workflow.add_node("web_search", web_search) # web search
+    workflow.add_node("retrieve", retrieve) # retrieve
+    workflow.add_node("grade_documents", grade_documents) # grade documents
+    workflow.add_node("generate", generate) # generatae
+    workflow.add_node("transform_query", transform_query) # transform_query
+
+    # Build graph
+    workflow.set_conditional_entry_point(
+        route_question,
+        {
+            "web_search": "web_search",
+            "vectorstore": "retrieve",
+        },
+    )
+    workflow.add_edge("web_search", "generate")
+    workflow.add_edge("retrieve", "grade_documents")
+    workflow.add_conditional_edges(
+        "grade_documents",
+        decide_to_generate,
+        {
+            "transform_query": "transform_query",
+            "generate": "generate",
+        },
+    )
+    workflow.add_edge("transform_query", "retrieve")
+    workflow.add_conditional_edges(
+        "generate",
+        grade_generation_v_documents_and_question,
+        {
+            "not supported": "generate",
+            "useful": END,
+            "not useful": "transform_query",
+        },
+    )
+
+    # Compile
+    app = workflow.compile()
+
+    inputs = {"question": user_input}
+    for output in app.stream(inputs):
+        for key, value in output.items():
+            # Node
+            st.write(f"Node '{key}':")
+            # Optional: print full state at each node
+            # pprint.pprint(value["keys"], indent=2, width=80, depth=None)
+        print("\n---\n")
+
+    # Final generation
+    st.write(value["generation"])
+
     
 
 
