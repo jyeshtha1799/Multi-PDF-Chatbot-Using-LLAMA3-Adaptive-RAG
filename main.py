@@ -185,3 +185,17 @@ for uploaded_file in uploaded_files:
     question_rewiter.invoke({"question": question})
 
     web_search_tool = TavilySearchResults(k=3,tavily_api_key=tavily_api_key)
+
+    class GraphState(TypedDict):
+        """
+    Represents the state of our graph.
+
+    Attributes:
+        question: question
+        generation: LLM generation
+        documents: list of documents 
+    """
+    question : str
+    generation : str
+    documents : List[str]
+
