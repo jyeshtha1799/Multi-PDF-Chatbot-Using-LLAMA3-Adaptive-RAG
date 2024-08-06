@@ -169,4 +169,17 @@ for uploaded_file in uploaded_files:
     answer_grader.invoke({"question": question,"generation": generation})
 
 
-    
+    ##Question Re-writer
+    # LLM
+    llm = ChatOllama(model=local_llm, temperature=0)
+
+    #Prompt
+    re_writer_prompt = PromptTemplate(
+        template="""You a question re-writer that converts an input question to a better version that is optimized \n 
+     for vectorstore retrieval. Look at the initial and formulate an improved question. \n
+     Here is the initial question: \n\n {question}. Improved question with no preamble: \n """,
+        input_variables=["generation", "question"],
+    )
+
+    question_rewiter = re_write_prompt | llm | StrOutputParser()
+    question_rewiter.invoke({"question": question})
