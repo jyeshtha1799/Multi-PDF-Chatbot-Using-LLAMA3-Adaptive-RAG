@@ -106,4 +106,22 @@ for uploaded_file in uploaded_files:
     doc_txt = docs[1].page_content
     st.write(retrieval_grader.invoke({"question": question, "document": doc_txt}))
 
+        ### Generate
+    prompt = hub.pull("rlm/rag-prompt")
+
+    # LLM
+    llm = ChatOllama(model=local_llm, temperature=0)
+
+    # Post-processing
+    def format_docs(docs):
+        return "\n\n".join(doc.page_content for doc in docs)
+
+    # Chain
+    rag_chain = prompt | llm | StrOutputParser()
+
+    # Run
+    question = "agent memory"
+    generation = rag_chain.invoke({"context": docs, "question": question})
+    print(generation)
+
     
