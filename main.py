@@ -56,3 +56,36 @@ for uploaded_file in uploaded_files:
         st.write(f"Data loaded for {uploaded_file.name}")
     except Exception as e:
         st.error(f"Failed to load {uploaded_file.name}: {str(e)}")
+    
+    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        chunk_size=250, chunk_overlap=0
+    )
+    text_chunks = text_splitter.split_documents(data)
+
+    # Add to vectorDB
+    vectorstore = Chroma.from_documents(
+        documents=text_chunks,
+        collection_name="rag-chroma",
+        embedding=GPT4AllEmbeddings(),
+    )
+    retriever = vectorstore.as_retriever()
+    llm = ChatOllama(model=local_llm, format="json", temperature=0)
+
+    prompt = PromptTemplate(
+        template="""You are an expert at routing a user question to a vectorstore or web search. \n
+        Use the vectorstore for questions on LLM  agents, prompt engineering, and adversarial attacks. \n
+        You do not need to be stringent with the keywords in the question related to these topics. \n
+        Otherwise, use web-search. Give a binary choice 'web_search' or 'vectorstore' based on the question. \n
+        Return the a JSON with a single key 'datasource' and no premable or explaination. \n
+        Question to route: {question}""",
+        input_variables=["question"],
+)
+
+    question_router = prompt | llm | JsonOutputParser()
+    question = "llm agent memory"
+    docs = retriever.get_relevant_documents(question)
+    doc_txt = docs[1].page_content
+    question_router.invoke({"question": question})
+    llm = ChatOllama(model=local_llm, format="json", temperature=0)
+
+    
