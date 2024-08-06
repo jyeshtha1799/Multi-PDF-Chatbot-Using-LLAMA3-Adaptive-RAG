@@ -183,3 +183,5 @@ for uploaded_file in uploaded_files:
 
     question_rewiter = re_write_prompt | llm | StrOutputParser()
     question_rewiter.invoke({"question": question})
+
+    web_search_tool = TavilySearchResults(k=3,tavily_api_key=tavily_api_key)
