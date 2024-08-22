@@ -79,7 +79,7 @@ This repository contains all the necessary code to replicate the project, along 
 6. **Run the application**:
 
     ```bash
-    streamlit run app.py
+    streamlit run main.py
     ```
 
 ## Usage
