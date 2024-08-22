@@ -22,6 +22,7 @@ This repository contains all the necessary code to replicate the project, along 
 - **PDF Document Handling**: Upload multiple PDF files and extract content efficiently.
 - **Adaptive RAG Integration**: Utilize the latest retrieval-augmented generation framework to dynamically manage query complexity.
 - **LLAMA3 Integration**: Leverage Meta's LLAMA3 for high-performance language understanding and generation.
+- **LangChain & LangGraph**: Implement complex workflows and stateful applications using these powerful libraries.
 - **Customizable Prompts**: Use `PromptTemplate` to fine-tune LLM interactions, including relevance grading, hallucination detection, and answer grading.
 - **Graph-Based Workflow**: Implement a state graph for routing, retrieval, query transformation, and generating responses.
 - **Web Search Augmentation**: Integrate Tavily's API for web search when the local vector store data is insufficient.
@@ -32,8 +33,9 @@ This repository contains all the necessary code to replicate the project, along 
 
 - Python 3.8 or higher
 - Pipenv or virtualenv for environment management
-- API keys for Tavily and GPT4All (if applicable)
+- API keys for Tavily, GPT4All, and LLAMA3 (if applicable)
 - Streamlit for running the web application
+- Access to LangChain and LangGraph libraries
 
 ### Setup
 
@@ -58,9 +60,23 @@ This repository contains all the necessary code to replicate the project, along 
     ```bash
     TAVILY_API_KEY=your_tavily_api_key
     GPT4ALL_API_KEY=your_gpt4all_api_key
+    LLAMA3_API_KEY=your_llama3_api_key
     ```
 
-4. **Run the application**:
+4. **Install LangChain and LangGraph**:
+
+    Make sure you have LangChain and LangGraph installed in your environment. You can install them using the following commands:
+
+    ```bash
+    pip install langchain
+    pip install langgraph
+    ```
+
+5. **Configure LLAMA3**:
+
+    If you're using LLAMA3 with an API, ensure that you have the correct API key and endpoint. Set this up in your environment variables as shown above.
+
+6. **Run the application**:
 
     ```bash
     streamlit run app.py
@@ -77,17 +93,17 @@ This repository contains all the necessary code to replicate the project, along 
 
 This project is built using a combination of the following components:
 
-- **LangChain**: For handling core AI model interactions and workflow management.
-- **LangGraph**: To create and manage complex stateful applications.
-- **LLAMA3**: A cutting-edge language model for understanding and generating human language.
-- **Adaptive RAG**: Ensures optimal retrieval strategies based on query complexity.
+- **LangChain**: For handling core AI model interactions and workflow management. LangChain allows you to integrate various models and tools into a unified workflow.
+- **LangGraph**: To create and manage complex stateful applications. LangGraph provides the structure to implement stateful interactions and manage complex workflows in a chatbot.
+- **LLAMA3**: A cutting-edge language model by Meta, used for understanding and generating human language. LLAMA3 is highly efficient and can be configured for various NLP tasks.
+- **Adaptive RAG**: Ensures optimal retrieval strategies based on query complexity, enhancing the chatbot's ability to provide accurate and efficient responses.
 - **Streamlit**: A web framework for deploying the chatbot as an interactive web app.
 
 ## Technologies Used
 
 - **Python**: The primary language used for this project.
 - **LLAMA3**: A language model by Meta.
-- **LangChain**: To interact with AI models and manage workflows.
+- **LangChain**: For interacting with AI models and managing workflows.
 - **LangGraph**: For building stateful applications.
 - **Streamlit**: For building the user interface.
 - **Tavily API**: For web search capabilities.
